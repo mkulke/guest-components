@@ -5,6 +5,9 @@
 use anyhow::{anyhow, bail, Context, Result};
 use futures_util::future;
 use futures_util::stream::{self, StreamExt, TryStreamExt};
+use oci_distribution::client::ClientConfig;
+#[cfg(feature = "insecure-registry")]
+use oci_distribution::client::ClientProtocol;
 use oci_distribution::manifest::{OciDescriptor, OciImageManifest};
 use oci_distribution::{secrets::RegistryAuth, Client, Reference};
 use sha2::Digest;
@@ -27,6 +30,9 @@ const DIGEST_SHA512: &str = "sha512";
 const ERR_NO_DECRYPT_CFG: &str = "decrypt_config is None";
 const ERR_BAD_UNCOMPRESSED_DIGEST: &str = "unsupported uncompressed digest format";
 const ERR_BAD_COMPRESSED_DIGEST: &str = "unsupported compressed digest format";
+
+#[cfg(feature = "insecure-registry")]
+const INSECURE_REGISTRY: &str = "localhost:5000";
 
 /// The PullClient connects to remote OCI registry, pulls the container image,
 /// and save the image layers under data_dir and return the layer meta info.
@@ -56,7 +62,11 @@ impl<'a> PullClient<'a> {
         auth: &'a RegistryAuth,
         max_concurrent_download: usize,
     ) -> Result<PullClient<'a>> {
-        let client = Client::default();
+        let client = Client::new(ClientConfig {
+            #[cfg(feature = "insecure-registry")]
+            protocol: ClientProtocol::HttpsExcept(vec![INSECURE_REGISTRY.to_owned()]),
+            ..Default::default()
+        });
 
         Ok(PullClient {
             client,

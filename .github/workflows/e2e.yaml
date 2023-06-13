@@ -1,10 +1,8 @@
 name: e2e
 
 on:
-  # pull_request:
-  #   branches: [ "main" ]
   push:
-    branches: [ "mkulke/cc_kbc-e2e-test" ]
+    branches: [ "main" ]
 
 # Self-hosted runners do not set -o pipefail otherwise
 defaults:
@@ -77,6 +75,7 @@ jobs:
         key: rust-${{ hashFiles('**/Cargo.toml') }}
 
     - name: Set up skopeo build cache
+      id: skopeo-cache
       uses: actions/cache@v3
       continue-on-error: false
       with:
@@ -84,82 +83,12 @@ jobs:
         key: skopeo-${{ env.SKOPEO_VERSION }}
 
     - name: Build skopeo
+      if: ${{ steps.cache.skopeo-cache.cache-hit != 'true' }}
       run: |
-        if [ -f /usr/local/bin/skopeo ]; then exit 0; fi
         wget -qO- "https://github.com/containers/skopeo/archive/refs/tags/v${SKOPEO_VERSION}.tar.gz" | tar xz
         cd "skopeo-${SKOPEO_VERSION}"
         DISABLE_DOCS=1 make bin/skopeo
         sudo cp bin/skopeo /usr/local/bin
 
-    - name: Build kbs
-      working-directory: kbs
-      run: cargo b -p kbs --release
-
-    - name: Build attestation-agent
-      working-directory: attestation-agent
-      run: cargo b --release --features cc_kbc
-
-    - name: Start coco_keyprovider service
-      working-directory: attestation-agent
-      run: |
-        ./target/release/coco_keyprovider --socket 127.0.0.1:50000 &
-        echo "keyprovider_pid=$!" >> "$GITHUB_ENV"
-
-    - name: Encrypt image with random key
-      run: |
-        cat <<EOF > ocicrypt.conf
-        {
-          "key-providers": {
-            "attestation-agent": {
-              "grpc": "127.0.0.1:50000"
-            }
-          }
-        }
-        EOF
-        keypath="${PWD}/image_key"
-        head -c 32 < /dev/urandom > "$keypath"
-        keyid="kbs://127.0.0.1:8080/default/key/busybox"
-        OCICRYPT_KEYPROVIDER_CONFIG="${PWD}/ocicrypt.conf" skopeo copy \
-          --insecure-policy \
-          --encryption-key "provider:attestation-agent:keypath=${keypath}::keyid=${keyid}::algorithm=A256GCM" \
-          --dest-tls-verify=false \
-          docker://busybox \
-          docker://localhost:5000/mkulke/busybox_encrypted:v1
-
-    - name: Stop coco_keyprovider service
-      run: kill "$keyprovider_pid"
-
-    # - name: Start kbs
-    #   working-directory: kbs
-    #   run: | 
-    #     openssl genpkey -algorithm ed25519 > kbs.key
-    #     openssl pkey -in kbs.key -pubout -out kbs.pem
-    #     sudo ./target/release/kbs \
-    #       --socket 127.0.0.1:8080 \
-    #       --insecure-http \
-    #       --auth-public-key ./kbs.pem &
-
-    # - name: Add secret resource to kbs repository
-    #   env:
-    #     REPO_PATH: /opt/confidential-containers/kbs/repository
-    #   run: |
-    #     sudo mkdir -p "${REPO_PATH}/one/two"
-    #     openssl rand 16 > a_secret
-    #     sudo cp a_secret "${REPO_PATH}/one/two/three"
-
-    # - name: Build client
-    #   run: cargo b -p client --release --features api-server/coco-as-builtin,api-server/rustls
-
-    # - name: Set cc_kbc sample attester env
-    #   if: matrix.tee == 'sample'
-    #   run: echo "AA_SAMPLE_ATTESTER_TEST=1" >> "$GITHUB_ENV"
-
-    # - name: Retrieve secret resource with client
-    #   run: |
-    #     sudo -E ./target/release/client get-resource \
-    #       --path one/two/three \
-    #       | base64 -d \
-    #       > roundtrip_secret
-    #     diff a_secret roundtrip_secret
     - name: Run hack/cc_kbc-e2e-test.sh
       run: BUILD_DIR="$PWD" ./image-rs/hack/cc_kbc-e2e-test.sh

@@ -60,12 +60,11 @@ OCICRYPT_KEYPROVIDER_CONFIG="${PWD}/ocicrypt.conf" skopeo copy \
   --dest-tls-verify=false \
   docker://busybox \
   docker://localhost:5000/coco/busybox_encrypted:v1
-# Stop coco_keyprovider service
 kill "$keyprovider_pid"
 
 echo "Build kbs..."
 pushd kbs
-cargo b --release -p kbs 
+cargo b --release -p kbs
 
 echo "Start kbs..."
 openssl genpkey -algorithm ed25519 > kbs.key

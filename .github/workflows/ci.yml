@@ -1,5 +1,5 @@
 name: image-rs build
-on: [pull_request, create]
+on: [push, pull_request, create]
 
 jobs:
   ci:
