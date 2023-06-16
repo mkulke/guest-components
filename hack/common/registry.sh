@@ -7,6 +7,7 @@ bold_echo() {
 }
 
 create_registry_certs() {
+	bold_echo "Create CA + certificates for local registry..."
 	mkdir -p ca certs
 
 	# Create a certificate authority
@@ -58,15 +59,14 @@ EOF
 		-sha256 \
 		-extfile domains.ext \
 		-out certs/domain.crt
-}
-
-start_tls_registry_with_auth() {
-	bold_echo "Create certificates for local registry..."
-	create_registry_certs
 
 	bold_echo "Add CA to OS trust store..."
 	sudo cp ca.pem /usr/local/share/ca-certificates/coco-test.crt
 	sudo update-ca-certificates
+}
+
+start_tls_registry_with_auth() {
+	create_registry_certs
 
 	bold_echo "Create auth file for registry..."
 	mkdir -p auth
@@ -89,6 +89,15 @@ start_tls_registry_with_auth() {
 		registry:2
 }
 
-start_registry() {
-	docker run -d -p 5000:5000 --name registry registry:2
+start_tls_registry() {
+	create_registry_certs
+
+	bold_echo "Start a registry with TLS and basic auth..."
+	docker run -d \
+		-p 5000:5000 \
+		--name registry \
+		-v "$(pwd)"/certs:/certs \
+		-e REGISTRY_HTTP_TLS_CERTIFICATE=/certs/domain.crt \
+		-e REGISTRY_HTTP_TLS_KEY=/certs/domain.key \
+		registry:2
 }

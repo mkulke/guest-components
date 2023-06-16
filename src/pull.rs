@@ -6,8 +6,6 @@ use anyhow::{anyhow, bail, Context, Result};
 use futures_util::future;
 use futures_util::stream::{self, StreamExt, TryStreamExt};
 use oci_distribution::client::ClientConfig;
-#[cfg(feature = "insecure-registry")]
-use oci_distribution::client::ClientProtocol;
 use oci_distribution::manifest::{OciDescriptor, OciImageManifest};
 use oci_distribution::{secrets::RegistryAuth, Client, Reference};
 use sha2::Digest;
@@ -62,11 +60,7 @@ impl<'a> PullClient<'a> {
         auth: &'a RegistryAuth,
         max_concurrent_download: usize,
     ) -> Result<PullClient<'a>> {
-        let client = Client::new(ClientConfig {
-            #[cfg(feature = "insecure-registry")]
-            protocol: ClientProtocol::HttpsExcept(vec![INSECURE_REGISTRY.to_owned()]),
-            ..Default::default()
-        });
+        let client = Client::new(ClientConfig::default());
 
         Ok(PullClient {
             client,

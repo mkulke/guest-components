@@ -16,7 +16,7 @@ jobs:
       SKOPEO_VERSION: "1.12.0"
     strategy:
       matrix:
-        test: [credentials-e2e.sh, cc_kbc-e2e-test.sh]
+        test: [credentials-e2e.sh, decryption-e2e.sh]
 
     steps:
     - uses: actions-rs/toolchain@v1

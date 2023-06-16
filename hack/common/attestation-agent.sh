@@ -7,18 +7,14 @@ bold_echo() {
 }
 
 start_aa() {
-	if [ ! -f "./bin/attestation-agent" ]; then
-		bold_echo "Build attestation-agent..."
-		pushd attestation-agent
-		cargo b --release -p attestation-agent \
-			--no-default-features \
-			--features grpc,cc_kbc,openssl
-		cp ./target/release/attestation-agent ../bin
-		popd 
-	fi
+	bold_echo "Build attestation-agent..."
+	pushd attestation-agent
+	cargo b --release -p attestation-agent \
+		--no-default-features \
+		--features grpc,cc_kbc,openssl
 
 	bold_echo "Start attestation-agent..."
-	AA_SAMPLE_ATTESTER_TEST=1 ./bin/attestation-agent \
+	AA_SAMPLE_ATTESTER_TEST=1 ./target/release/attestation-agent \
 		--keyprovider_sock 127.0.0.1:50000 --getresource_sock 127.0.0.1:50001 &
 	aa_pid=$!
 	sleep 1
@@ -26,4 +22,5 @@ start_aa() {
 		bold_echo "attestation-agent failed to start"
 		exit 1
 	fi
+	popd 
 }

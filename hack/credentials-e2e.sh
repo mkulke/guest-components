@@ -7,11 +7,11 @@ REGISTRY_USER=ci-user
 REGISTRY_PASSWORD=ci-password
 
 cleanup() {
-  if [ -z "${BUILD_DIR:-}" ]; then
-	rm -rf "$build_dir"
-  fi
-  docker ps -q --filter "name=registry" | grep -q . && docker rm -f registry
-  jobs -p | grep -q . && jobs -p | xargs kill
+	test -z "$BUILD_DIR" && rm -rf "$build_dir"
+	docker ps -q --filter "name=registry" | grep -q . && docker rm -f registry
+	test -f /run/image-security/kbs/* && rm /run/image-security/kbs/* || true
+	docker ps -q --filter "name=registry" | grep -q . && docker rm -f registry
+	jobs -p | grep -q . && jobs -p | xargs kill
 }
 trap 'cleanup' EXIT
 
