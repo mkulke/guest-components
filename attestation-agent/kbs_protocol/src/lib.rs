@@ -73,11 +73,11 @@
 pub mod api;
 pub mod builder;
 pub mod client;
-pub mod evidence_provider;
 pub mod keypair;
 pub mod token_provider;
 
 pub use api::*;
+pub use attester::*;
 pub use builder::KbsClientBuilder;
 pub use keypair::TeeKeyPair;
 pub use token_provider::Token;

@@ -5,6 +5,7 @@
 
 use anyhow::{bail, Context, Result};
 use async_trait::async_trait;
+use attester::BoxedEvidenceProvider;
 use kbs_types::{Attestation, Challenge, ErrorInformation, Request, Response};
 use log::{debug, warn};
 use resource_uri::ResourceUri;
@@ -14,7 +15,6 @@ use sha2::{Digest, Sha384};
 use crate::{
     api::{KbsClientCapabilities, PassportClientCapabilities},
     client::{KbsClient, KBS_GET_RESOURCE_MAX_ATTEMPT, KBS_PREFIX, KBS_PROTOCOL_VERSION},
-    evidence_provider::EvidenceProvider,
     keypair::TeeKeyPair,
     token_provider::Token,
 };
@@ -25,7 +25,8 @@ struct AttestationResponseData {
     token: String,
 }
 
-impl KbsClient<Box<dyn EvidenceProvider>> {
+// impl KbsClient<Box<dyn EvidenceProvider>> {
+impl KbsClient<BoxedEvidenceProvider> {
     /// Perform RCAR handshake with the given kbs host. If succeeds, the [`KbsBackgoundCheckClient`] will
     /// store the token.
     ///
@@ -122,7 +123,7 @@ impl KbsClient<Box<dyn EvidenceProvider>> {
 }
 
 #[async_trait]
-impl KbsClientCapabilities for KbsClient<Box<dyn EvidenceProvider>> {
+impl KbsClientCapabilities for KbsClient<BoxedEvidenceProvider> {
     async fn get_resource(&mut self, resource_uri: ResourceUri) -> Result<Vec<u8>> {
         let remote_url = format!(
             "{}/{KBS_PREFIX}/resource/{}/{}/{}",
@@ -173,7 +174,7 @@ impl KbsClientCapabilities for KbsClient<Box<dyn EvidenceProvider>> {
 }
 
 #[async_trait]
-impl PassportClientCapabilities for KbsClient<Box<dyn EvidenceProvider>> {
+impl PassportClientCapabilities for KbsClient<BoxedEvidenceProvider> {
     async fn get_token(&mut self) -> Result<(Token, TeeKeyPair)> {
         if let Some(token) = &self.token {
             if token.check_valid().is_err() {
@@ -193,14 +194,12 @@ impl PassportClientCapabilities for KbsClient<Box<dyn EvidenceProvider>> {
 
 #[cfg(test)]
 mod test {
+    use attester::{detect_tee_type, BoxedEvidenceProvider};
     use std::{env, path::PathBuf};
     use testcontainers::{clients, images::generic::GenericImage};
     use tokio::fs;
 
-    use crate::{
-        evidence_provider::NativeEvidenceProvider, KbsClientBuilder, KbsClientCapabilities,
-        PassportClientCapabilities,
-    };
+    use crate::{KbsClientBuilder, KbsClientCapabilities, PassportClientCapabilities};
 
     const CONTENT: &[u8] = b"test content";
 
@@ -249,7 +248,8 @@ mod test {
         let kbs_host_url = format!("http://127.0.0.1:{port}");
 
         env::set_var("AA_SAMPLE_ATTESTER_TEST", "1");
-        let evidence_provider = Box::new(NativeEvidenceProvider::new().unwrap());
+        let tee = detect_tee_type().unwrap();
+        let evidence_provider: BoxedEvidenceProvider = tee.try_into().unwrap();
         let mut client = KbsClientBuilder::with_evidence_provider(evidence_provider, &kbs_host_url)
             .build()
             .expect("client create");

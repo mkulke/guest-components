@@ -7,6 +7,8 @@ use anyhow::Result;
 use async_trait::async_trait;
 use resource_uri::ResourceUri;
 
+pub use attester::{detect_tee_type, BoxedEvidenceProvider};
+
 use crate::{keypair::TeeKeyPair, token_provider::Token};
 
 #[async_trait]

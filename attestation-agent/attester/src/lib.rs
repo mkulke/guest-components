@@ -20,13 +20,17 @@ pub mod sgx_dcap;
 #[cfg(feature = "snp-attester")]
 pub mod snp;
 
-pub struct BoxedAttester(pub Box<dyn Attester + Send + Sync>);
+pub type BoxedAttester = Box<dyn Attester + Send + Sync>;
+
+pub type BoxedEvidenceProvider = BoxedAttester;
+pub trait EvidenceProvider: Attester {}
+impl<T> EvidenceProvider for T where T: Attester {}
 
 impl TryFrom<Tee> for BoxedAttester {
     type Error = anyhow::Error;
 
-    fn try_from(value: Tee) -> std::result::Result<Self, Self::Error> {
-        let attester: Box<dyn Attester + Send + Sync> = match value {
+    fn try_from(value: Tee) -> Result<Self> {
+        let attester: Self = match value {
             Tee::Sample => Box::<sample::SampleAttester>::default(),
             #[cfg(feature = "tdx-attester")]
             Tee::Tdx => Box::<tdx::TdxAttester>::default(),
@@ -39,7 +43,7 @@ impl TryFrom<Tee> for BoxedAttester {
             _ => bail!("TEE is not supported!"),
         };
 
-        Ok(BoxedAttester(attester))
+        Ok(attester)
     }
 }
 
@@ -49,6 +53,11 @@ pub trait Attester {
     /// The parameter `report_data` will be used as the user input of the
     /// evidence to avoid reply attack.
     async fn get_evidence(&self, report_data: Vec<u8>) -> Result<String>;
+
+    /// Get the underlying Tee type
+    async fn get_tee_type(&self) -> Result<Tee> {
+        detect_tee_type()
+    }
 }
 
 // Detect which TEE platform the KBC running environment is.

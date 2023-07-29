@@ -4,15 +4,14 @@
 // SPDX-License-Identifier: Apache-2.0
 //
 
+use attester::BoxedEvidenceProvider;
 use std::time::Duration;
 
-use anyhow::*;
-
 use crate::{
-    evidence_provider::EvidenceProvider,
     keypair::TeeKeyPair,
     token_provider::{Token, TokenProvider},
 };
+use anyhow::*;
 
 use super::client::KbsClient;
 
@@ -26,13 +25,10 @@ pub struct KbsClientBuilder<T> {
     tee_key: Option<String>,
 }
 
-impl KbsClientBuilder<Box<dyn EvidenceProvider>> {
-    pub fn with_evidence_provider(
-        evidence_provider: Box<dyn EvidenceProvider>,
-        kbs_host_url: &str,
-    ) -> Self {
+impl KbsClientBuilder<BoxedEvidenceProvider> {
+    pub fn with_evidence_provider(provider: BoxedEvidenceProvider, kbs_host_url: &str) -> Self {
         Self {
-            provider: evidence_provider,
+            provider,
             kbs_certs: vec![],
             kbs_host_url: kbs_host_url.trim_end_matches('/').to_string(),
             token: None,
@@ -110,9 +106,25 @@ impl<T> KbsClientBuilder<T> {
 
 #[cfg(test)]
 mod tests {
+    use crate::builder::KbsClientBuilder;
+    use async_trait::async_trait;
+    use attester::Attester;
+    use kbs_types::Tee;
     use rstest::rstest;
 
-    use crate::{builder::KbsClientBuilder, evidence_provider::MockedEvidenceProvider};
+    #[derive(Default)]
+    pub struct MockedEvidenceProvider;
+
+    #[async_trait]
+    impl Attester for MockedEvidenceProvider {
+        async fn get_evidence(&self, _: Vec<u8>) -> anyhow::Result<String> {
+            Ok("test evidence".into())
+        }
+
+        async fn get_tee_type(&self) -> anyhow::Result<Tee> {
+            Ok(Tee::Sample)
+        }
+    }
 
     #[rstest]
     #[tokio::test]

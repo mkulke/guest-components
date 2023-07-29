@@ -6,9 +6,8 @@
 use crate::{KbcCheckInfo, KbcInterface};
 use crypto::{decrypt, WrapType};
 use kbs_protocol::{
-    client::KbsClient,
-    evidence_provider::{EvidenceProvider, NativeEvidenceProvider},
-    KbsClientBuilder, KbsClientCapabilities,
+    client::KbsClient, detect_tee_type, BoxedEvidenceProvider, KbsClientBuilder,
+    KbsClientCapabilities,
 };
 
 use super::AnnotationPacket;
@@ -20,7 +19,7 @@ use zeroize::Zeroizing;
 
 pub struct Kbc {
     token: Option<String>,
-    kbs_client: KbsClient<Box<dyn EvidenceProvider>>,
+    kbs_client: KbsClient<BoxedEvidenceProvider>,
 }
 
 #[async_trait]
@@ -51,11 +50,9 @@ impl KbcInterface for Kbc {
 
 impl Kbc {
     pub fn new(kbs_uri: String) -> Result<Kbc> {
-        let kbs_client = KbsClientBuilder::with_evidence_provider(
-            Box::new(NativeEvidenceProvider::new()?),
-            &kbs_uri,
-        )
-        .build()?;
+        let tee = detect_tee_type()?;
+        let provider: BoxedEvidenceProvider = tee.try_into()?;
+        let kbs_client = KbsClientBuilder::with_evidence_provider(provider, &kbs_uri).build()?;
         Ok(Kbc {
             token: None,
             kbs_client,
