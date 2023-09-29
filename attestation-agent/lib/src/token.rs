@@ -40,21 +40,27 @@ pub(crate) async fn get_kbs_token() -> Result<Vec<u8>> {
     Ok(res)
 }
 
+fn extract_kbs_host(kbc_params: &str) -> Result<String> {
+    let kbs_host = kbc_params
+        .split("::")
+        .last()
+        .ok_or(anyhow!("illegal input `agent.aa_kbc_params` format",))?
+        .to_string();
+
+    Ok(kbs_host)
+}
+
 pub(crate) async fn get_kbs_host_from_cmdline() -> Result<String> {
     let cmdline = fs::read_to_string("/proc/cmdline").await?;
-    let kbs_host = cmdline
+    let aa_kbc_params = cmdline
         .split_ascii_whitespace()
         .find(|para| para.starts_with("agent.aa_kbc_params="))
         .ok_or(anyhow!(
             "no `agent.aa_kbc_params` provided in kernel commandline!",
         ))?
         .strip_prefix("agent.aa_kbc_params=")
-        .expect("must have one")
-        .split("::")
-        .last()
-        .ok_or(anyhow!("illegal input `agent.aa_kbc_params` format",))?
-        .to_string();
-
+        .expect("must have one");
+    let kbs_host = extract_kbs_host(aa_kbc_params)?;
     Ok(kbs_host)
 }
 
@@ -73,7 +79,10 @@ pub(crate) async fn get_kbs_host_from_config_file() -> Result<String> {
     let agent_config: AgentConfig = toml::from_str(&agent_config_str)
         .map_err(|e| anyhow!("Failed to deserialize /etc/agent-config.toml: {e}"))?;
 
-    agent_config.aa_kbc_params.ok_or(anyhow!(
+    let aa_kbc_params = agent_config.aa_kbc_params.ok_or(anyhow!(
         "no `aa_kbc_params` found in /etc/agent-config.toml!",
-    ))
+    ))?;
+
+    let kbs_host = extract_kbs_host(&aa_kbc_params)?;
+    Ok(kbs_host)
 }
