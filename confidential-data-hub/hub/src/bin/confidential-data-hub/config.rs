@@ -6,8 +6,9 @@
 use std::env;
 
 use anyhow::*;
+use attestation_agent::config::aa_kbc_params::AaKbcParams;
 use config::{Config, File};
-use log::warn;
+use log::{debug, warn};
 use serde::Deserialize;
 use tokio::fs;
 
@@ -64,6 +65,7 @@ impl CdhConfig {
             Self::default()
         });
 
+        config.update_from_env()?;
         config.update_from_kernel_cmdline().await?;
         Ok(config)
     }
@@ -78,6 +80,17 @@ impl CdhConfig {
 
         let res = c.try_deserialize().context("invalid config").unwrap();
         Ok(res)
+    }
+
+    fn update_from_env(&mut self) -> Result<()> {
+        let Some(env_value) = env::var("AA_KBC_PARAMS").ok() else {
+            return Ok(());
+        };
+        debug!("AA_KBC_PARAMS env is set, populating the config with it");
+        let aa_kbc_params: AaKbcParams = env_value.try_into()?;
+        self.kbc.name = aa_kbc_params.kbc().into();
+        self.kbc.url = aa_kbc_params.uri().into();
+        Ok(())
     }
 
     /// all the resource ids can be from the kernel commandline in the following format:

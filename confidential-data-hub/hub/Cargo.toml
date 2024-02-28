@@ -53,4 +53,4 @@ sev = ["attestation_agent", "image/sev", "kms/sev", "dep:sev", "secret/sev"]
 # support eHSM stacks (KMS, ...)
 ehsm = ["image/ehsm", "secret/ehsm"]
 
-bin = ["anyhow", "clap", "config", "env_logger", "protobuf", "serde", "tokio/signal", "ttrpc", "ttrpc-codegen"]
+bin = ["anyhow", "attestation_agent", "clap", "config", "env_logger", "protobuf", "serde", "tokio/signal", "ttrpc", "ttrpc-codegen"]
