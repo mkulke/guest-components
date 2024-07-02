@@ -4,9 +4,11 @@
 //
 
 use super::Attester;
+use anyhow::Result;
 use az_snp_vtpm::{imds, is_snp_cvm, vtpm};
 use log::debug;
 use serde::{Deserialize, Serialize};
+use sha2::{Digest, Sha256};
 
 pub fn detect_platform() -> bool {
     match is_snp_cvm() {
@@ -17,6 +19,8 @@ pub fn detect_platform() -> bool {
         }
     }
 }
+
+const DEFAULT_RUNTIME_MEASUREMENT_PCR: u64 = 8;
 
 #[derive(Debug, Default)]
 pub struct AzSnpVtpmAttester;
@@ -43,5 +47,21 @@ impl Attester for AzSnpVtpmAttester {
         };
 
         Ok(serde_json::to_string(&evidence)?)
+    }
+
+    async fn extend_runtime_measurement(
+        &self,
+        events: Vec<Vec<u8>>,
+        register_index: Option<u64>,
+    ) -> Result<()> {
+        let pcr = register_index.unwrap_or(DEFAULT_RUNTIME_MEASUREMENT_PCR) as u8;
+        for event in events {
+            let mut hasher = Sha256::new();
+            hasher.update(event);
+            let digest: [u8; 32] = hasher.finalize().into();
+            vtpm::extend_pcr(pcr, &digest)?;
+        }
+
+        Ok(())
     }
 }

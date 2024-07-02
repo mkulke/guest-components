@@ -9,6 +9,7 @@ use az_tdx_vtpm::vtpm::Quote as TpmQuote;
 use az_tdx_vtpm::{hcl, imds, is_tdx_cvm, vtpm};
 use log::debug;
 use serde::{Deserialize, Serialize};
+use sha2::{Digest, Sha256};
 use std::result::Result::Ok;
 
 pub fn detect_platform() -> bool {
@@ -20,6 +21,8 @@ pub fn detect_platform() -> bool {
         }
     }
 }
+
+const DEFAULT_RUNTIME_MEASUREMENT_PCR: u64 = 8;
 
 #[derive(Debug, Default)]
 pub struct AzTdxVtpmAttester;
@@ -47,5 +50,21 @@ impl Attester for AzTdxVtpmAttester {
             td_quote: td_quote_bytes,
         };
         Ok(serde_json::to_string(&evidence)?)
+    }
+
+    async fn extend_runtime_measurement(
+        &self,
+        events: Vec<Vec<u8>>,
+        register_index: Option<u64>,
+    ) -> Result<()> {
+        let pcr = register_index.unwrap_or(DEFAULT_RUNTIME_MEASUREMENT_PCR) as u8;
+        for event in events {
+            let mut hasher = Sha256::new();
+            hasher.update(event);
+            let digest: [u8; 32] = hasher.finalize().into();
+            vtpm::extend_pcr(pcr, &digest)?;
+        }
+
+        Ok(())
     }
 }
