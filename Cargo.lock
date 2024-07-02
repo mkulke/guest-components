@@ -407,7 +407,7 @@ dependencies = [
 [[package]]
 name = "az-cvm-vtpm"
 version = "0.6.0"
-source = "git+http://github.com/mkulke/azure-cvm-tooling?rev=fff44a#fff44a8542ec986a5a13e43e9ea3d967bd2516a5"
+source = "git+http://github.com/mkulke/azure-cvm-tooling?rev=69526229dbb78fe4a5d6e8c6887a146d8c6640b0#69526229dbb78fe4a5d6e8c6887a146d8c6640b0"
 dependencies = [
  "bincode",
  "jsonwebkey",
@@ -417,6 +417,7 @@ dependencies = [
  "serde-big-array",
  "serde_json",
  "sev 3.1.1",
+ "sha2 0.10.8",
  "thiserror",
  "tss-esapi",
  "zerocopy",
@@ -425,7 +426,7 @@ dependencies = [
 [[package]]
 name = "az-snp-vtpm"
 version = "0.6.0"
-source = "git+http://github.com/mkulke/azure-cvm-tooling?rev=fff44a#fff44a8542ec986a5a13e43e9ea3d967bd2516a5"
+source = "git+http://github.com/mkulke/azure-cvm-tooling?rev=69526229dbb78fe4a5d6e8c6887a146d8c6640b0#69526229dbb78fe4a5d6e8c6887a146d8c6640b0"
 dependencies = [
  "az-cvm-vtpm",
  "bincode",
@@ -439,7 +440,7 @@ dependencies = [
 [[package]]
 name = "az-tdx-vtpm"
 version = "0.6.0"
-source = "git+http://github.com/mkulke/azure-cvm-tooling?rev=fff44a#fff44a8542ec986a5a13e43e9ea3d967bd2516a5"
+source = "git+http://github.com/mkulke/azure-cvm-tooling?rev=69526229dbb78fe4a5d6e8c6887a146d8c6640b0#69526229dbb78fe4a5d6e8c6887a146d8c6640b0"
 dependencies = [
  "az-cvm-vtpm",
  "base64-url",

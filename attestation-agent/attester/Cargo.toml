@@ -9,9 +9,9 @@ edition = "2021"
 anyhow.workspace = true
 async-trait.workspace = true
 # az-snp-vtpm = { version = "0.5.3", default-features = false, features = ["attester"], optional = true }
-az-snp-vtpm = { git = "http://github.com/mkulke/azure-cvm-tooling", default-features = false, features = ["attester"], optional = true, rev = "fff44a" }
+az-snp-vtpm = { git = "http://github.com/mkulke/azure-cvm-tooling", default-features = false, features = ["attester"], optional = true, rev = "69526229dbb78fe4a5d6e8c6887a146d8c6640b0" }
 # az-tdx-vtpm = { version = "0.5.3", default-features = false, features = ["attester"], optional = true }
-az-tdx-vtpm = { git = "http://github.com/mkulke/azure-cvm-tooling", default-features = false, features = ["attester"], optional = true, rev = "fff44a" }
+az-tdx-vtpm = { git = "http://github.com/mkulke/azure-cvm-tooling", default-features = false, features = ["attester"], optional = true, rev = "69526229dbb78fe4a5d6e8c6887a146d8c6640b0" }
 base64.workspace = true
 clap = { workspace = true, features = ["derive"], optional = true }
 kbs-types.workspace = true
