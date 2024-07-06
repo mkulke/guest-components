@@ -38,7 +38,8 @@ use crate::config::Config;
 /// use attestation_agent::AttestationAgent;
 /// use attestation_agent::AttestationAPIs;
 ///
-/// let mut aa = AttestationAgent::default();
+/// // initialize with empty config
+/// let mut aa = AttestationAgent::new(None).unwrap();
 ///
 /// let _quote = aa.get_evidence(&[0;64]);
 /// ```
