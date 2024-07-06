@@ -39,7 +39,7 @@ tokio = { version = "1", features = ["full"], optional = true }
 tempfile = { workspace = true, optional = true }
 
 [dev-dependencies]
-tokio.workspace = true
+tokio = { workspace = true, features = ["macros", "rt-multi-thread"] }
 rstest.workspace = true
 
 [[bin]]
@@ -54,7 +54,7 @@ all-attesters = [
     "az-snp-vtpm-attester",
     "az-tdx-vtpm-attester",
     "snp-attester",
-    "csv-attester",
+    # "csv-attester",
     "cca-attester",
     "se-attester",
 ]
