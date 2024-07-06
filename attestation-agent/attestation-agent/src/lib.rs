@@ -124,13 +124,13 @@ impl AttestationAPIs for AttestationAgent {
         match token_type {
             #[cfg(feature = "kbs")]
             token::TokenType::Kbs => {
-                token::kbs::KbsTokenGetter::new(&self._config.token_configs.kbs)
+                token::kbs::KbsTokenGetter::new(&self.config.token_configs.kbs)
                     .get_token()
                     .await
             }
             #[cfg(feature = "coco_as")]
             token::TokenType::CoCoAS => {
-                token::coco_as::CoCoASTokenGetter::new(&self._config.token_configs.coco_as)
+                token::coco_as::CoCoASTokenGetter::new(&self.config.token_configs.coco_as)
                     .get_token()
                     .await
             }
