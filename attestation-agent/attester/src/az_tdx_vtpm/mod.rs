@@ -7,7 +7,7 @@ use super::Attester;
 use anyhow::*;
 use az_tdx_vtpm::vtpm::Quote as TpmQuote;
 use az_tdx_vtpm::{hcl, imds, is_tdx_cvm, vtpm};
-use log::debug;
+use log::{debug, info};
 use serde::{Deserialize, Serialize};
 use sha2::{Digest, Sha256};
 use std::result::Result::Ok;
@@ -62,6 +62,7 @@ impl Attester for AzTdxVtpmAttester {
             let mut hasher = Sha256::new();
             hasher.update(event);
             let digest: [u8; 32] = hasher.finalize().into();
+            info!("Extending PCR {} with digest: {:?}", pcr, digest);
             vtpm::extend_pcr(pcr, &digest)?;
         }
 

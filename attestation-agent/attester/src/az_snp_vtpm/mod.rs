@@ -6,7 +6,7 @@
 use super::Attester;
 use anyhow::Result;
 use az_snp_vtpm::{imds, is_snp_cvm, vtpm};
-use log::debug;
+use log::{debug, info};
 use serde::{Deserialize, Serialize};
 use sha2::{Digest, Sha256};
 
@@ -59,6 +59,7 @@ impl Attester for AzSnpVtpmAttester {
             let mut hasher = Sha256::new();
             hasher.update(event);
             let digest: [u8; 32] = hasher.finalize().into();
+            info!("Extending PCR {} with digest: {:?}", pcr, digest);
             vtpm::extend_pcr(pcr, &digest)?;
         }
 
